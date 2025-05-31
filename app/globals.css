@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 50 100% 65%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 10%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 50 100% 65%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 80%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styles for the curved bottom design */
+.curved-bottom {
+  position: relative;
+  overflow: hidden;
+}
+
+.curved-bottom::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background-color: theme("colors.brand.yellow");
+  border-top-left-radius: 50% 20%;
+  border-top-right-radius: 50% 20%;
+  z-index: -1;
+}
+
+.curved-bottom-sm::after {
+  height: 60px;
+}
+
+.curved-bottom-lg::after {
+  height: 120px;
+}
+
+/* Custom card styles */
+.property-card {
+  @apply overflow-hidden rounded-2xl border bg-card text-card-foreground shadow;
+}
+
+.property-card-header {
+  @apply relative h-48 overflow-hidden;
+}
+
+.property-card-content {
+  @apply p-4;
+}
+
+/* Custom button styles */
+.btn-primary {
+  @apply bg-brand-dark text-white hover:bg-opacity-90 rounded-full py-3 px-6 font-medium;
+}
+
+.btn-outline {
+  @apply border border-brand-dark text-brand-dark hover:bg-brand-dark hover:text-white rounded-full py-3 px-6 font-medium;
+}
+
+/* Custom input styles */
+.input-primary {
+  @apply rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+}
+
+/* Custom badge styles */
+.badge-primary {
+  @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-brand-yellow text-brand-dark;
+}
+
+.badge-secondary {
+  @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-brand-gray text-brand-dark;
+}
+
+/* Custom navigation styles */
+.bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 border-t bg-background z-10 py-2;
+}
+
+.bottom-nav-item {
+  @apply flex flex-col items-center justify-center py-1 text-xs;
+}
+
+.bottom-nav-item.active {
+  @apply text-brand-dark;
+}
+
+.bottom-nav-item:not(.active) {
+  @apply text-brand-muted;
+}
