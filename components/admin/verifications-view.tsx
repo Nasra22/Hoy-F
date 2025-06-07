@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { act, useEffect, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, AlertCircle, Clock } from "lucide-react"
+import { getAllProperties, Property } from "@/lib/property-service"
+import { propertyVerification, resetVerification } from "@/app/api/admin-service/route"
 
 // Mock data for user verifications
 const userVerifications = [
@@ -60,56 +62,14 @@ const userVerifications = [
   },
 ]
 
-// Mock data for property verifications
-const propertyVerifications = [
-  {
-    id: "1",
-    propertyId: "7",
-    propertyTitle: "Elegant Townhouse",
-    propertyLocation: "555 Park Ave, New York, NY",
-    ownerId: "3",
-    ownerName: "Robert Johnson",
-    ownerRole: "landlord",
-    documentType: "Deed",
-    documentUrl: "/placeholder.svg?height=200&width=300",
-    submittedAt: "2023-06-16",
-    status: "pending",
-    imageUrl: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "2",
-    propertyId: "8",
-    propertyTitle: "Waterfront Condo",
-    propertyLocation: "777 Harbor Dr, San Diego, CA",
-    ownerId: "2",
-    ownerName: "Jane Smith",
-    ownerRole: "agent",
-    documentType: "Listing Agreement",
-    documentUrl: "/placeholder.svg?height=200&width=300",
-    submittedAt: "2023-06-19",
-    status: "pending",
-    imageUrl: "/placeholder.svg?height=200&width=300",
-  },
-  {
-    id: "3",
-    propertyId: "9",
-    propertyTitle: "Mountain Retreat",
-    propertyLocation: "999 Summit Rd, Denver, CO",
-    ownerId: "8",
-    ownerName: "Lisa Taylor",
-    ownerRole: "landlord",
-    documentType: "Property Tax Statement",
-    documentUrl: "/placeholder.svg?height=200&width=300",
-    submittedAt: "2023-06-21",
-    status: "pending",
-    imageUrl: "/placeholder.svg?height=200&width=300",
-  },
-]
-
-export function VerificationsView() {
+export function VerificationsView({property}: Property[]) {
   const [activeTab, setActiveTab] = useState("users")
   const [userVerificationsList, setUserVerificationsList] = useState(userVerifications)
-  const [propertyVerificationsList, setPropertyVerificationsList] = useState(propertyVerifications)
+  const [propertyVerificationsList, setPropertyVerificationsList] = useState(property)
+
+  useEffect(() => {
+    setPropertyVerificationsList(property)
+  })
 
   const handleUserVerification = (id: string, action: "approve" | "reject" | "request-info") => {
     setUserVerificationsList(
@@ -125,16 +85,13 @@ export function VerificationsView() {
   }
 
   const handlePropertyVerification = (id: string, action: "approve" | "reject" | "request-info") => {
-    setPropertyVerificationsList(
-      propertyVerificationsList.map((verification) =>
-        verification.id === id
-          ? {
-              ...verification,
-              status: action === "approve" ? "approved" : action === "reject" ? "rejected" : "info-requested",
-            }
-          : verification,
-      ),
-    )
+    console.log(id)
+    console.log(action === "approve" ? "approved" : action === "reject" ? "rejected" : "info-requested")
+    propertyVerification(id, action === "approve" ? "approved" : action === "reject" ? "rejected" : "info-requested")
+  }
+
+  const handleResetVerification = (Id: string) => {
+    resetVerification(Id)
   }
 
   return (
@@ -150,7 +107,7 @@ export function VerificationsView() {
           <TabsTrigger value="properties" className="relative">
             Property Verifications
             <Badge className="ml-2 bg-primary text-primary-foreground">
-              {propertyVerificationsList.filter((v) => v.status === "pending").length}
+              {propertyVerificationsList.filter((v) => v.isVerified === "pending").length}
             </Badge>
           </TabsTrigger>
         </TabsList>
@@ -297,11 +254,11 @@ export function VerificationsView() {
               <Card
                 key={verification.id}
                 className={
-                  verification.status === "approved"
+                  verification.isVerified === "approved"
                     ? "border-green-500"
-                    : verification.status === "rejected"
+                    : verification.isVerified === "rejected"
                       ? "border-red-500"
-                      : verification.status === "info-requested"
+                      : verification.isVerified === "info-requested"
                         ? "border-yellow-500"
                         : ""
                 }
@@ -309,8 +266,8 @@ export function VerificationsView() {
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-base">{verification.propertyTitle}</CardTitle>
-                      <CardDescription className="text-xs">{verification.propertyLocation}</CardDescription>
+                      <CardTitle className="text-base">{verification.title}</CardTitle>
+                      <CardDescription className="text-xs">{verification.address}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -319,39 +276,39 @@ export function VerificationsView() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Owner:</span>
                       <span className="font-medium">
-                        {verification.ownerName} ({verification.ownerRole})
+                        {verification.owner.name}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Document Type:</span>
-                      <span className="font-medium">{verification.documentType}</span>
+                      <span className="font-medium">{verification.documents}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Submitted:</span>
-                      <span className="font-medium">{verification.submittedAt}</span>
+                      <span className="font-medium">{ new Date(verification.timeStamp.seconds * 1000).toLocaleString() }</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Status:</span>
                       <span className="font-medium flex items-center">
-                        {verification.status === "pending" && (
+                        {verification.isVerified === "pending" && (
                           <>
                             <Clock className="h-4 w-4 mr-1 text-yellow-500" />
                             Pending
                           </>
                         )}
-                        {verification.status === "approved" && (
+                        {verification.isVerified === "approved" && (
                           <>
                             <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
                             Approved
                           </>
                         )}
-                        {verification.status === "rejected" && (
+                        {verification.isVerified === "rejected" && (
                           <>
                             <XCircle className="h-4 w-4 mr-1 text-red-500" />
                             Rejected
                           </>
                         )}
-                        {verification.status === "info-requested" && (
+                        {verification.isVerified === "request-info" && (
                           <>
                             <AlertCircle className="h-4 w-4 mr-1 text-yellow-500" />
                             Info Requested
@@ -360,21 +317,23 @@ export function VerificationsView() {
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <img
-                      src={verification.imageUrl || "/placeholder.svg"}
-                      alt="Property"
-                      className="w-full h-24 object-cover rounded-md"
-                    />
-                    <img
-                      src={verification.documentUrl || "/placeholder.svg"}
-                      alt="Verification Document"
-                      className="w-full h-24 object-cover rounded-md"
-                    />
-                  </div>
+                  {verification.media.map((media) => (
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <img
+                        src={media.url || "/placeholder.svg"}
+                        alt="Property"
+                        className="w-full h-24 object-cover rounded-md"
+                      />
+                      <img
+                        src={media.url || "/placeholder.svg"}
+                        alt="Verification Document"
+                        className="w-full h-24 object-cover rounded-md"
+                      />
+                    </div>
+                  ))}
                 </CardContent>
                 <CardFooter className="pt-3">
-                  {verification.status === "pending" && (
+                  {verification.isVerified === "pending" && (
                     <div className="flex gap-2 w-full">
                       <Button
                         size="sm"
@@ -401,18 +360,12 @@ export function VerificationsView() {
                       </Button>
                     </div>
                   )}
-                  {verification.status !== "pending" && (
+                  {verification.isVerified !== "pending" && (
                     <Button
                       size="sm"
                       variant="outline"
                       className="w-full"
-                      onClick={() =>
-                        setPropertyVerificationsList(
-                          propertyVerificationsList.map((v) =>
-                            v.id === verification.id ? { ...v, status: "pending" } : v,
-                          ),
-                        )
-                      }
+                      onClick={() => handleResetVerification(verification.id)}
                     >
                       Reset Status
                     </Button>
