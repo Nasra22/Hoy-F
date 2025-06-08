@@ -62,7 +62,7 @@ export default function SignupPage() {
 
     setIsLoading(true)
     try {
-      await signup(email, password, role, handlePage, handleError)
+      await signup(name, email, password, role, handlePage, handleError)
     } catch (err) {
       setError("Signup failed. Please try again.")
     } finally {
