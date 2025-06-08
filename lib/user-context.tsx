@@ -3,16 +3,15 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import app from "./firebase-service"
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from "firebase/auth"
-import { set } from "date-fns"
 
 export type UserRole = "client" | "landlord" | "agent" | "driver" | "cleaner" | "admin"
 
-interface User {
+export interface User {
   id: string
-  name: string | null
-  email: string | null
+  name: string | ""
+  email: string | ""
   role: UserRole
-  avatar?: string | null
+  avatar?: string | ""
 }
 
 interface UserContextType {
