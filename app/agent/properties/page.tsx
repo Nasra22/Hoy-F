@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { AgentDashboardHeader } from "@/components/agent/dashboard-header"
 import { AgentNavigation } from "@/components/agent/navigation"
 import { PropertyCard } from "@/components/agent/property-card"
-import { getAllProperties, deleteProperty, type Property } from "@/lib/agent-service"
+import { getAllProperties, deleteProperty } from "@/lib/agent-service"
 import { useUser } from "@/lib/user-context"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { getProperty } from "@/app/api/property-service/route"
+import { getProperties } from "@/app/api/property-service/route"
+import { Property } from "@/lib/property-service"
 
 export default function AgentPropertiesPage() {
   const { user, isLoading } = useUser()
@@ -54,6 +55,8 @@ export default function AgentPropertiesPage() {
 
     loadData()
   }, [])
+
+  console.log(user)
 
   // Filter properties based on search query and status
   const filteredProperties = properties.filter((property) => {
