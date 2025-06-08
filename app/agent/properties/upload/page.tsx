@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { addProperty } from "@/app/api/property-service/route"
-import { Property } from "@/lib/agent-service"
+import { Property } from "@/lib/property-service"
 
 export default function PropertyUploadPage() {
   const { user, isLoading } = useUser()
@@ -59,7 +59,7 @@ export default function PropertyUploadPage() {
           <h1 className="text-2xl font-bold">Add New Property</h1>
         </div>
 
-        <PropertyUploadForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+        <PropertyUploadForm user={user} onSubmit={handleSubmit} isSubmitting={isSubmitting} />
       </main>
 
       <AgentNavigation />
