@@ -36,7 +36,7 @@ interface FilterContextType {
 }
 
 const defaultFilters: FilterState = {
-  priceRange: [0, 1000],
+  priceRange: [0, 100000],
   bedrooms: null,
   bathrooms: null,
   propertyTypes: [],
