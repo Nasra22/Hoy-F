@@ -24,11 +24,6 @@ export function AgentNavigation() {
       icon: Building,
     },
     {
-      label: "Appointments",
-      href: "/agent/appointments",
-      icon: Calendar,
-    },
-    {
       label: "Messages",
       href: "/agent/messages",
       icon: MessageSquare,
