@@ -6,10 +6,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
-import { ImageIcon, Video, FileText, X, Upload, Plus } from "lucide-react"
+import { ImageIcon, Video, FileText, X, Upload, Plus, Camera } from "lucide-react"
+import { PropertyMedia } from "@/lib/property-service"
 
 interface MediaUploaderProps {
-  uploadedMedia: string[]
+  uploadedMedia: PropertyMedia[]
   setUploadedMedia: (media: string[]) => void
 }
 
@@ -18,13 +19,27 @@ export function MediaUploader({ uploadedMedia, setUploadedMedia }: MediaUploader
   const [isDragging, setIsDragging] = useState(false)
 
   // In a real app, this would upload files to a storage service
-  const handleFileUpload = () => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const newMedia = [
+            ...uploadedMedia,
+            {
+              type: "image",
+              url: event.target.result as string,
+            }
+          ]
+
+          setUploadedMedia(newMedia)
+        }
+      }
+      reader.readAsDataURL(e.target.files[0])
+    }
+
     // Simulate adding a new placeholder image
-    const newMedia = [
-      ...uploadedMedia,
-      `/placeholder.svg?height=600&width=800&text=New+Image+${uploadedMedia.length + 1}`,
-    ]
-    setUploadedMedia(newMedia)
+    console.log(uploadedMedia)
   }
 
   const handleRemoveMedia = (index: number) => {
@@ -82,9 +97,21 @@ export function MediaUploader({ uploadedMedia, setUploadedMedia }: MediaUploader
           >
             <Upload className="h-10 w-10 mx-auto text-gray-400" />
             <p className="mt-4 text-sm text-muted-foreground">Drag and drop your photos here, or click to browse</p>
-            <Button onClick={handleFileUpload} className="mt-4">
-              Upload Photos
-            </Button>
+            <div className="relative my-2">
+                <label
+                  htmlFor="profile-upload"
+                  className="relative cursor-pointer shadow-md"
+                >
+                  <p className="bg-yellow-300 rounded-md p-2">Upload photos</p>
+                  <input
+                    id="profile-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              </div>
           </div>
 
           {uploadedMedia.length > 0 && (
@@ -96,7 +123,7 @@ export function MediaUploader({ uploadedMedia, setUploadedMedia }: MediaUploader
                     <div className="aspect-square rounded-md overflow-hidden bg-gray-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={media || "/placeholder.svg"}
+                        src={media.url || "/placeholder.svg"}
                         alt={`Property photo ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -116,14 +143,22 @@ export function MediaUploader({ uploadedMedia, setUploadedMedia }: MediaUploader
                     )}
                   </div>
                 ))}
-                <Button
-                  variant="outline"
-                  className="aspect-square flex flex-col items-center justify-center border-2 border-dashed"
-                  onClick={handleFileUpload}
-                >
-                  <Plus className="h-8 w-8 mb-2" />
-                  <span className="text-xs">Add Photo</span>
-                </Button>
+                <div className="relative my-2">
+                  <label
+                    htmlFor="profile-upload"
+                    className="aspect-square flex rounded-md flex-col items-center justify-center border-2 border-dashed"
+                  >
+                    <Plus className="h-8 w-8 mb-2" />
+                    <span className="text-xs">Add Photo</span>
+                    <input
+                      id="profile-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           )}
