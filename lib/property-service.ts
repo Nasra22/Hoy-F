@@ -1,142 +1,125 @@
-import { getProperties } from "@/app/api/property-service/route"
-import { User, UserRole } from "./user-context"
+"use client"
 
-// Types for our property system
-export interface PropertyImage {
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import app from "./firebase-service"
+import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from "firebase/auth"
+
+export type UserRole = "client" | "landlord" | "agent" | "driver" | "cleaner" | "admin"
+
+export interface User {
   id: string
-  url: string
-  alt: string
+  name: string | ""
+  email: string | ""
+  role: UserRole
+  avatar?: string | ""
 }
 
-export interface PropertyAmenity {
-  name: string
-  icon: string
+interface UserContextType {
+  user: User | null
+  isLoading: boolean
+  login: (email: string, password: string, role: UserRole) => Promise<void>
+  signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>
+  logout: () => void
 }
 
-export interface FilterOptions {
-  location: string
-  priceRange: {
-    min: number
-    max: number
+const auth = getAuth(app)
+const UserContext = createContext<UserContextType | undefined>(undefined)
+
+export function UserProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Check for existing user session on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem("hoyfinder-user")
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (error) {
+        console.error("Failed to parse stored user:", error)
+      }
+    }
+    setIsLoading(false)
+  }, [])
+
+  // Mock login function - in a real app, this would call an API
+  const login = async (email: string, password: string, role: UserRole) => {
+    setIsLoading(true)
+      // Simulate API call
+      signInWithEmailAndPassword(auth, email, password).then((userCredential) => {
+              const user = userCredential.user;
+
+              // Create mock user
+              const newUser: User = {
+                id: user.uid,
+                name: user.displayName,
+                email: user.email,
+                role,
+                avatar: user.photoURL,
+              }
+
+              console.log("Success")
+
+              // Store user in local storage
+              localStorage.setItem("hoyfinder-user", JSON.stringify(newUser))
+              setUser(newUser)
+              return true
+          })
+          .catch((error) => {
+              const errorCode = error.code
+              const errorMessage = error.message
+              console.error("Login failed:", errorMessage)
+              console.log("Failed")
+              return false
+          }).finally (() => {
+              setIsLoading(false)
+          })
   }
-  bedrooms: number | "Any"
-  bathrooms: number | "Any"
-  propertyType: string
-  amenities: PropertyAmenity[]
-}
 
-export interface PropertyMedia {
-  type: string | "",
-  url: string | ""
-}
+  // Mock signup function - in a real app, this would call an API
+  const signup = async (name: string, email: string, password: string, role: UserRole) => {
+    setIsLoading(true)
+      // Simulate API call
+      createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
+        const user = userCredential.user
 
+        // Create mock user
+        const newUser: User = {
+          id: user.uid,
+          name: user.displayName,
+          email: user.email,
+          role,
+          avatar: user.photoURL,
+        }
 
-// Types for our agent system
-export interface Property {
-  id: string
-  title: string
-  price: string
-  type: string
-  bedrooms: string
-  bathrooms: string
-  size: number
-  owner: User
-  status: "active" | "pending" | "sold" | "rented"
-  description: string
-  // Additional fields for property editing
-  address?: string
-  city?: string
-  state?: string
-  amenities?: string[]
-  isPublished?: boolean
-  isVerified: string
-  media?: PropertyMedia[]
-  timestamp: string
-}
+        console.log("Finished")
 
-
-export const defaultFilters = {
-  location: "",
-  priceRange: { min: 0, max: 10000 },
-  bedrooms: "Any" as const,
-  bathrooms: "Any" as const,
-  propertyType: "Any",
-  amenities: [],
-}
-
-// fetched data for development
-export const fetchedProperties: Property[] = []
-
-// Property service functions
-export const propertyService = {
-  // Get all properties
-  getAllProperties: async (): Promise<Property[]> => {
-    // In a real app, this would fetch from an API or database
-    const snapshot = getProperties();
-    (await snapshot).forEach((doc) => {
-      const data = {
-        ...doc.data(),
-        id: doc.id,
-      };
-      console.log(data)
-      fetchedProperties.push(data)
+        // Store user in local storage
+        localStorage.setItem("hoyfinder-user", JSON.stringify(newUser))
+        setUser(newUser)
+      })
+      .catch((error) => {
+        const errorCode = error.code
+        const errorMessage = error.message
+        console.error("Login failed:", error.message)
+        throw new Error(errorMessage)
+      }).finally (() => {
+        setIsLoading(false)
     })
-    console.log(fetchedProperties)
+  }
 
-    return fetchedProperties
-  },
+  const logout = () => {
+    localStorage.removeItem("hoyfinder-user")
+    setUser(null)
+  }
 
-  // Get property by ID
-  getPropertyById: async (id: string): Promise<Property | undefined> => {
-    // In a real app, this would fetch from an API or database
-    return fetchedProperties.find((property) => property.id === id)
-  },
-
-  // Get similar properties
-  getSimilarProperties: async (currentId: string, type: string, location: string): Promise<Property[]> => {
-    // In a real app, this would fetch from an API or database with more sophisticated filtering
-    return fetchedProperties
-      .filter((property) => property.id !== currentId && (property.type === type || property.address === location))
-      .slice(0, 2) // Limit to 2 similar properties
-  },
-
-  // Update an existing property
-  updateProperty: async (id: string, propertyData: Partial<Property>): Promise<Property | undefined> => {
-    // In a real app, this would update data in an API or database
-    const propertyIndex = fetchedProperties.findIndex((property) => property.id === id)
-
-    if (propertyIndex === -1) {
-      return undefined
-    }
-
-    // Update the property
-    fetchedProperties[propertyIndex] = {
-      ...fetchedProperties[propertyIndex],
-      ...propertyData,
-    }
-
-    return fetchedProperties[propertyIndex]
-  },
-
-  // Delete a property
-  deleteProperty: async (id: string): Promise<boolean> => {
-    // In a real app, this would delete data from an API or database
-    const propertyIndex = fetchedProperties.findIndex((property) => property.id === id)
-
-    if (propertyIndex === -1) {
-      return false
-    }
-
-    // Remove the property from the array
-    fetchedProperties.splice(propertyIndex, 1)
-
-    return true
-  },
+  return <UserContext.Provider value={{ user, isLoading, login, signup, logout }}>{children}</UserContext.Provider>
 }
 
-export const getPropertyById = propertyService.getPropertyById
-export const getAllProperties = propertyService.getAllProperties
-export const getSimilarProperties = propertyService.getSimilarProperties
-export const createProperty = propertyService.createProperty
-export const updateProperty = propertyService.updateProperty
-export const deleteProperty = propertyService.deleteProperty
+export function useUser() {
+  const context = useContext(UserContext)
+  if (context === undefined) {
+    throw new Error("useUser must be used within a UserProvider")
+  }
+  return context
+} 
