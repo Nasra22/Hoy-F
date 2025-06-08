@@ -1,37 +1,42 @@
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
 import app from "@/lib/firebase-service"
-
-export type UserRole = "client" | "landlord" | "agent" | "driver" | "cleaner" | "admin"
-
-interface User {
-  id: string
-  name: string | null
-  email: string | null
-  role: UserRole
-  avatar?: string | null
-}
+import { addDoc, collection, getFirestore, serverTimestamp } from "firebase/firestore"
+import { User, UserRole } from "@/lib/user-context"
 
 const auth = getAuth(app)
+const db = getFirestore(app)
 
-export async function signup(email: string, password: string, role: UserRole, handlePage: Function, handleError: Function) {
+export async function signup(name: string, email: string, password: string, role: UserRole, handlePage: Function, handleError: Function) {
     createUserWithEmailAndPassword(auth, email, password).then((userCredential) => {
         const user = userCredential.user;
 
         const newUser: User = {
             id: user.uid,
-            name: user.displayName,
-            email: user.email,
+            name: name || "",
+            email: user.email || "",
             role,
-            avatar: user.photoURL,
+            avatar: user.photoURL || "",
         }
 
         handlePage(role)
         localStorage.setItem("hoyfinder-user", JSON.stringify(newUser))
+        storeUser(newUser, role)
     })
     .catch((error) => {
         const errorMessage = error.message
         handleError(errorMessage.substring(10,))
         throw new Error(errorMessage)
+    })
+}
+
+export async function storeUser(user: User, role: UserRole) {
+    await addDoc(collection(db, "User"), {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: role,
+        avatar: user.avatar,
+        timeStamp: serverTimestamp()
     })
 }
 
@@ -41,10 +46,10 @@ export async function login(email: string, password: string, role: UserRole, han
         
         const newUser: User = {
             id: user.uid,
-            name: user.displayName,
-            email: user.email,
+            name: user.displayName || "",
+            email: user.email || "",
             role,
-            avatar: user.photoURL,
+            avatar: user.photoURL || "",
         }
 
         localStorage.setItem("hoyfinder-user", JSON.stringify(newUser))
