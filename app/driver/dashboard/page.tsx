@@ -183,5 +183,4 @@ export default function DriverDashboard() {
 
       <DriverNavigation />
     </div>
-  )
-}
+ 
