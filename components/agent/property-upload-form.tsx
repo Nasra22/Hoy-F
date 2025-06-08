@@ -15,7 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MediaUploader } from "@/components/agent/media-uploader"
 import { PropertyFeatures } from "@/components/agent/property-features"
 import { PropertyLocation } from "@/components/agent/property-location-input"
-import type { Property } from "@/lib/agent-service"
+import type { Property, PropertyMedia } from "@/lib/property-service"
+import { User } from "@/lib/user-context"
 
 // Form schema
 const formSchema = z.object({
@@ -35,7 +36,8 @@ const formSchema = z.object({
 })
 
 type PropertyUploadFormProps = {
-  onSubmit: (data: z.infer<typeof formSchema> & { media: string[]; id?: string }) => void
+  onSubmit: (data: z.infer<typeof formSchema> & { media: string[]; user: User }) => void
+  user: User
   isSubmitting: boolean
   isEditing?: boolean
   propertyData?: Property & {
@@ -44,17 +46,18 @@ type PropertyUploadFormProps = {
     city?: string
     state?: string
     isPublished?: boolean
-    media?: string[]
+    media?: PropertyMedia[]
   }
 }
 
 export function PropertyUploadForm({
+  user,
   onSubmit,
   isSubmitting,
   isEditing = false,
   propertyData,
 }: PropertyUploadFormProps) {
-  const [uploadedMedia, setUploadedMedia] = useState<string[]>(propertyData?.media || [])
+  const [uploadedMedia, setUploadedMedia] = useState<PropertyMedia[]>(propertyData?.media || [])
 
   // Set default values based on whether we're editing or creating
   const defaultValues =
@@ -82,6 +85,7 @@ export function PropertyUploadForm({
           status: "active",
           bedrooms: "",
           bathrooms: "",
+          owner: user,
           size: "",
           amenities: [],
           address: "",
@@ -122,6 +126,7 @@ export function PropertyUploadForm({
     // Combine form data with uploaded media and property ID if editing
     const formData = {
       ...values,
+      owner: user,
       media: uploadedMedia,
       ...(isEditing && propertyData ? { id: propertyData.id } : {}),
     }
